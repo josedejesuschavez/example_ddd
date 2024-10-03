@@ -1,1 +1,1 @@
-# example_ddd
+# Example DDD

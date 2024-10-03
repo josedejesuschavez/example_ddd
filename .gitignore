@@ -1,0 +1,9 @@
+.idea
+venv
+.npm
+.cache
+.jupyter
+.local
+staticfiles
+__pycache__
+postgres_data

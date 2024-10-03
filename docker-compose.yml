@@ -1,0 +1,59 @@
+services:
+  application:
+    build:
+      context: ddd-main
+      dockerfile: Dockerfile
+    command: >
+      sh -c "wait-for-it database:5432 -- python manage.py migrate &&
+      wait-for-it database:5432 -- python manage.py runscript create_superuser &&
+      wait-for-it database:5432 -- python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ddd:/code
+    depends_on:
+      - database
+      - rabbitmq
+      - celery_worker
+    env_file:
+      - .env
+  database:
+    image: postgres:16.2
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: rabbitmq
+    env_file:
+      - .env
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  celery_worker:
+    build:
+      context: ddd-main
+      dockerfile: Dockerfile
+    container_name: celery_worker
+    command: celery -A ddd worker --loglevel=info
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./ddd:/code
+    env_file:
+      - .env
+  jupyter-notebook:
+    image: jupyter/minimal-notebook
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./ddd:/home/jovyan
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  rabbitmq_data: {}
